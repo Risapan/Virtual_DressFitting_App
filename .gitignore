@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+data/looks/
+data/config.json
+ai/
+.DS_Store

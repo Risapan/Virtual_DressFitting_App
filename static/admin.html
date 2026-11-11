@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collection Manager</title>
+<link rel="stylesheet" href="/static/css/mirror.css">
+<style>
+  html, body { overflow: auto; }
+  body { background: #120e10; }
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 16px 60px; }
+  header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 22px; }
+  h1 { font-family: var(--serif); font-weight: 400; font-size: 34px; margin: 0; }
+  h3 { font-family: var(--serif); font-weight: 400; font-size: 22px; margin: 0 0 12px; }
+  .layout { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+  .card { background: #1b1517; border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
+  .list { display: flex; flex-direction: column; gap: 8px; max-height: 70vh; overflow: auto; }
+  .item { display: flex; gap: 12px; align-items: center; padding: 8px; border-radius: 12px; border: 1px solid transparent; background: none; text-align: left; width: 100%; }
+  .item:hover { background: rgba(255,255,255,.04); }
+  .item.active { border-color: var(--gold); background: rgba(243,215,166,.08); }
+  .item img { width: 46px; height: 64px; object-fit: contain; }
+  .item small { display: block; color: var(--muted); }
+  input[type=text], input[type=number], select { width: 100%; background: #2a2225; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; font: inherit; }
+  input[type=file] { color: var(--muted); font-size: 13px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field { margin-bottom: 12px; }
+  .field > span { font-size: 13px; color: var(--muted); }
+  .editor { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+  @media (max-width: 1000px) { .editor { grid-template-columns: 1fr; } }
+  .calib-wrap { position: relative; background: repeating-conic-gradient(#2a2326 0 25%, #221c1e 0 50%) 0 0/20px 20px; border-radius: 12px; overflow: hidden; user-select: none; touch-action: none; }
+  .calib-wrap img { display: block; width: 100%; }
+  .calib-wrap svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .handle { cursor: grab; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+  .tabs button { border: 1px solid var(--line); background: none; border-radius: 999px; padding: 5px 12px; font-size: 13px; }
+  .tabs button.on { background: var(--gold); color: #2a1d10; border-color: transparent; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; color: var(--muted); font-weight: 500; padding: 4px; }
+  td { padding: 3px 4px; }
+  td input { padding: 6px 8px !important; }
+  .danger { color: #ffb4b4; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #2a1d10; padding: 10px 18px; border-radius: 999px; opacity: 0; transition: opacity .3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  .legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); margin: 8px 0; flex-wrap: wrap; }
+  .legend i { display: inline-block; width: 12px; height: 3px; vertical-align: middle; margin-right: 5px; }
+  .empty-state { color: var(--muted); padding: 30px 0; text-align: center; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Collection</h1>
+    <div class="row">
+      <a class="btn" href="/">Open mirror</a>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <form id="add" class="card">
+        <h3>Add a dress</h3>
+        <label class="field"><span>Name</span><input type="text" name="name" required placeholder="e.g. Lilac Wrap Dress"></label>
+        <div class="grid2">
+          <label class="field"><span>Price</span><input type="number" name="price" min="0" step="any" value="0"></label>
+          <label class="field"><span>Sleeves</span>
+            <select name="sleeves"><option value="none">Sleeveless</option><option value="short">Short</option><option value="long">Long</option></select>
+          </label>
+        </div>
+        <label class="field"><span>Front photo (required)</span><input type="file" name="front" accept="image/*" required></label>
+        <label class="field"><span>Back photo (optional)</span><input type="file" name="back" accept="image/*"></label>
+        <p class="muted small">Photograph the dress flat or on a hanger against a plain wall, straight on, full length. The background is removed automatically. A PNG with a transparent background works best.</p>
+        <button class="btn" type="submit" id="add-btn">Add dress</button>
+      </form>
+
+      <div class="card">
+        <h3>Dresses</h3>
+        <div id="list" class="list"></div>
+      </div>
+
+      <form id="store" class="card">
+        <h3>Store</h3>
+        <label class="field"><span>Store name</span><input type="text" name="storeName"></label>
+        <label class="field"><span>Currency</span><input type="text" name="currency"></label>
+        <button class="btn" type="submit">Save</button>
+      </form>
+    </div>
+
+    <div id="detail" class="card"><div class="empty-state">Select a dress to edit it.</div></div>
+  </div>
+</main>
+<div id="toast" class="toast"></div>
+
+<script type="module">
+const $ = (s, r = document) => r.querySelector(s);
+let dresses = [], current = null, side = "front";
+
+async function load(selectId) {
+  dresses = await fetch("/api/dresses").then(r => r.json());
+  const list = $("#list");
+  list.innerHTML = dresses.length ? "" : `<p class="muted">No dresses yet.</p>`;
+  for (const d of dresses) {
+    const b = document.createElement("button");
+    b.className = "item" + (current?.id === d.id ? " active" : "");
+    b.innerHTML = `<img alt="" src="${d.urls.thumb}"><div>${esc(d.name)}<small>${d.price ? d.price.toLocaleString() : ""} · ${d.sleeves}${d.urls.back ? " · front+back" : ""}</small></div>`;
+    b.onclick = () => select(d.id);
+    list.appendChild(b);
+  }
+  if (selectId) select(selectId);
+}
+
+function select(id) {
+  current = structuredClone(dresses.find(d => d.id === id));
+  side = "front";
+  document.querySelectorAll(".item").forEach((el, i) => el.classList.toggle("active", dresses[i].id === id));
+  renderDetail();
+}
+
+function renderDetail() {
+  const d = current, el = $("#detail");
+  const sizes = d.sizes || {};
+  el.innerHTML = `
+    <div class="editor">
+      <div>
+        <h3>Fit calibration</h3>
+        <div class="tabs">
+          <button data-side="front" class="${side === "front" ? "on" : ""}">Front</button>
+          ${d.urls.back ? `<button data-side="back" class="${side === "back" ? "on" : ""}">Back</button>` : ""}
+        </div>
+        <div class="calib-wrap" id="calib"><img id="calib-img" alt="" src="${side === "back" ? d.urls.back : d.urls.front}"><svg id="calib-svg"></svg></div>
+        <div class="legend"><span><i style="background:#f3d7a6"></i>shoulder joints (drag dots)</span><span><i style="background:#7fd3ff"></i>hip line (drag)</span></div>
+        <p class="muted small">Place the gold dots where the wearer's shoulder joints would be, and the blue line at hip-bone level. The mirror stretches the dress so these points follow the customer's body.</p>
+        <button class="btn small" id="auto">Auto-detect again</button>
+      </div>
+      <div>
+        <h3>Details</h3>
+        <label class="field"><span>Name</span><input type="text" id="f-name" value="${esc(d.name)}"></label>
+        <div class="grid2">
+          <label class="field"><span>Price</span><input type="number" id="f-price" min="0" step="any" value="${d.price ?? 0}"></label>
+          <label class="field"><span>Sleeves</span><select id="f-sleeves">
+            ${["none", "short", "long"].map(s => `<option value="${s}" ${d.sleeves === s ? "selected" : ""}>${{ none: "Sleeveless", short: "Short", long: "Long" }[s]}</option>`).join("")}
+          </select></label>
+        </div>
+        <h3 style="margin-top:8px">Size chart (cm)</h3>
+        <table id="sizes"><thead><tr><th>Size</th><th>Bust from</th><th>to</th><th>Hip from</th><th>to</th><th></th></tr></thead><tbody>
+          ${Object.entries(sizes).map(([n, r]) => sizeRow(n, r)).join("")}
+        </tbody></table>
+        <button class="btn small" id="add-size" style="margin-top:8px">+ Add size</button>
+        <div class="row gap">
+          <button class="btn" id="save" style="background:var(--gold);color:#2a1d10">Save changes</button>
+          <button class="btn danger" id="del">Delete</button>
+        </div>
+        ${d.cutout ? `<p class="muted small">Background removal: ${d.cutout}</p>` : ""}
+      </div>
+    </div>`;
+  el.querySelectorAll("[data-side]").forEach(b => b.onclick = () => { side = b.dataset.side; renderDetail(); });
+  $("#calib-img").onload = drawCalib;
+  if ($("#calib-img").complete) drawCalib();
+  $("#auto").onclick = async () => {
+    const r = await fetch(`/api/dresses/${d.id}/recalibrate`, { method: "POST" }).then(r => r.json());
+    current.calib = r.calib; current.calibBack = r.calibBack; drawCalib(); toast("Calibration reset (not saved yet)");
+  };
+  $("#add-size").onclick = () => $("#sizes tbody").insertAdjacentHTML("beforeend", sizeRow("", { bust: [0, 0], hip: [0, 0] }));
+  $("#sizes").onclick = e => { if (e.target.dataset.rm !== undefined) e.target.closest("tr").remove(); };
+  $("#save").onclick = save;
+  $("#del").onclick = async () => {
+    if (!confirm(`Delete "${d.name}"? This removes its photos.`)) return;
+    await fetch(`/api/dresses/${d.id}`, { method: "DELETE" });
+    current = null; $("#detail").innerHTML = `<div class="empty-state">Deleted.</div>`; load();
+  };
+}
+
+function sizeRow(n, r) {
+  const v = (a, i) => (a && a[i]) ?? "";
+  return `<tr><td><input type="text" value="${esc(n)}" style="width:60px"></td>
+    <td><input type="number" value="${v(r.bust, 0)}"></td><td><input type="number" value="${v(r.bust, 1)}"></td>
+    <td><input type="number" value="${v(r.hip, 0)}"></td><td><input type="number" value="${v(r.hip, 1)}"></td>
+    <td><button class="icon-btn" data-rm style="width:30px;height:30px;padding:0">✕</button></td></tr>`;
+}
+
+function calibKey() { return side === "back" ? "calibBack" : "calib"; }
+
+function drawCalib() {
+  const img = $("#calib-img"), svg = $("#calib-svg");
+  const W = img.naturalWidth, H = img.naturalHeight;
+  if (!W) return;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const c = current[calibKey()] || (current[calibKey()] = { ...current.calib });
+  const sy = c.shoulderY * H, sl = c.shoulderL * W, sr = c.shoulderR * W, hy = c.hipY * H;
+  const r = W * 0.025;
+  svg.innerHTML = `
+    <line x1="${sl}" y1="${sy}" x2="${sr}" y2="${sy}" stroke="#f3d7a6" stroke-width="${r * 0.3}" stroke-dasharray="${r} ${r * 0.6}"/>
+    <line x1="${(sl + sr) / 2}" y1="${sy}" x2="${(sl + sr) / 2}" y2="${hy}" stroke="rgba(255,255,255,.35)" stroke-width="${r * 0.15}"/>
+    <line class="handle" data-h="hip" x1="0" y1="${hy}" x2="${W}" y2="${hy}" stroke="#7fd3ff" stroke-width="${r * 0.5}"/>
+    <circle class="handle" data-h="L" cx="${sl}" cy="${sy}" r="${r}" fill="#f3d7a6" stroke="#2a1d10" stroke-width="${r * 0.2}"/>
+    <circle class="handle" data-h="R" cx="${sr}" cy="${sy}" r="${r}" fill="#f3d7a6" stroke="#2a1d10" stroke-width="${r * 0.2}"/>`;
+  svg.querySelectorAll(".handle").forEach(h => h.onpointerdown = e => startDrag(e, h.dataset.h));
+}
+
+function startDrag(e, which) {
+  e.preventDefault();
+  const svg = $("#calib-svg");
+  const move = ev => {
+    const rect = svg.getBoundingClientRect();
+    const x = clamp((ev.clientX - rect.left) / rect.width, 0, 1);
+    const y = clamp((ev.clientY - rect.top) / rect.height, 0, 1);
+    const c = current[calibKey()];
+    if (which === "hip") c.hipY = Math.max(y, c.shoulderY + 0.05);
+    else {
+      c.shoulderY = Math.min(y, c.hipY - 0.05);
+      if (which === "L") c.shoulderL = Math.min(x, c.shoulderR - 0.05);
+      else c.shoulderR = Math.max(x, c.shoulderL + 0.05);
+    }
+    drawCalib();
+  };
+  const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+  window.addEventListener("pointermove", move);
+  window.addEventListener("pointerup", up);
+}
+
+async function save() {
+  const sizes = {};
+  for (const tr of document.querySelectorAll("#sizes tbody tr")) {
+    const [n, b0, b1, h0, h1] = [...tr.querySelectorAll("input")].map(i => i.value.trim());
+    if (n) sizes[n] = { bust: [Number(b0), Number(b1)], hip: [Number(h0), Number(h1)] };
+  }
+  const body = {
+    name: $("#f-name").value.trim() || current.name,
+    price: Number($("#f-price").value) || 0,
+    sleeves: $("#f-sleeves").value,
+    calib: current.calib, sizes,
+  };
+  if (current.calibBack) body.calibBack = current.calibBack;
+  const r = await fetch(`/api/dresses/${current.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!r.ok) return toast("Save failed: " + (await r.text()));
+  toast("Saved");
+  load(current.id);
+}
+
+$("#add").onsubmit = async e => {
+  e.preventDefault();
+  const btn = $("#add-btn");
+  btn.disabled = true; btn.textContent = "Processing photo…";
+  try {
+    const fd = new FormData(e.target);
+    if (!fd.get("back")?.size) fd.delete("back");
+    const r = await fetch("/api/dresses", { method: "POST", body: fd });
+    if (!r.ok) throw new Error((await r.json()).detail);
+    const d = await r.json();
+    e.target.reset();
+    toast("Added — check the calibration");
+    await load(d.id);
+  } catch (err) { toast("Failed: " + err.message); }
+  finally { btn.disabled = false; btn.textContent = "Add dress"; }
+};
+
+$("#store").onsubmit = async e => {
+  e.preventDefault();
+  const fd = Object.fromEntries(new FormData(e.target));
+  await fetch("/api/config", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(fd) });
+  toast("Store saved");
+};
+fetch("/api/config").then(r => r.json()).then(c => { $("#store").storeName.value = c.storeName; $("#store").currency.value = c.currency; });
+
+function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("show"), 2200); }
+function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+load();
+</script>
+</body>
+</html>

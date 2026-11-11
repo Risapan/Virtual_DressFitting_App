@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fitting Mirror</title>
+<link rel="stylesheet" href="/static/css/mirror.css">
+</head>
+<body>
+<div id="stage">
+  <video id="video" playsinline muted></video>
+  <canvas id="gl"></canvas>
+  <canvas id="overlay"></canvas>
+</div>
+
+<header class="topbar">
+  <div id="brand" class="brand">My Boutique</div>
+  <div class="actions">
+    <button id="view-toggle" class="pill" title="Front / back view (B)">
+      <svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3M18 3v4h-4M6 21v-4h4"/></svg>
+      <span id="facing">Auto · front</span>
+    </button>
+    <button id="capture" class="pill accent" title="Capture front, side and back (Space)">
+      <svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+      <span>Capture look</span>
+    </button>
+    <button id="looks" class="icon-btn" title="Recent looks">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    </button>
+    <button id="settings" class="icon-btn" title="Settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+  </div>
+</header>
+
+<button id="prev" class="edge left" aria-label="Previous dress">
+  <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+  <span>raise left hand</span>
+</button>
+<button id="next" class="edge right" aria-label="Next dress">
+  <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+  <span>raise right hand</span>
+</button>
+
+<div id="hint" class="hint">
+  <b>Step into the mirror</b>
+  <span>Stand about 2 metres back so your whole body is visible</span>
+</div>
+
+<section class="bottom">
+  <div class="info">
+    <div id="dress-name" class="dress-name"></div>
+    <div class="row">
+      <span id="dress-price" class="price"></span>
+      <span id="dress-back-note" class="tag" hidden>front photo only</span>
+    </div>
+    <div id="size" class="size"></div>
+  </div>
+  <div id="carousel" class="carousel"></div>
+  <div class="gesture-help">Raise <b>right hand</b> → next · <b>left hand</b> → previous · <b>both hands</b> → capture look</div>
+</section>
+
+<div id="countdown" class="countdown" hidden></div>
+<div id="flash" class="flash"></div>
+<div id="empty" class="hint show" hidden><b>No dresses yet</b><span>Add your collection at <a href="/admin">/admin</a></span></div>
+
+<div id="loading" class="loading">
+  <div class="spinner"></div>
+  <div id="loading-text">Starting…</div>
+</div>
+
+<!-- look modal -->
+<div id="look-modal" class="modal" hidden>
+  <div class="sheet wide">
+    <div class="sheet-head"><h2 id="look-title">Your look</h2><button class="icon-btn" data-close aria-label="Close">✕</button></div>
+    <div id="look-grid" class="look-grid"></div>
+    <p id="look-ai-note" class="muted small">Looks are saved on this computer. Photo-realistic AI rendering is not set up yet.</p>
+  </div>
+</div>
+
+<!-- settings modal -->
+<div id="settings-modal" class="modal" hidden>
+  <div class="sheet">
+    <div class="sheet-head"><h2>Settings</h2><button class="icon-btn" data-close aria-label="Close">✕</button></div>
+    <label class="field">
+      <span>Customer height · <b id="height-val">not set</b></span>
+      <div class="row">
+        <input id="height-input" type="range" min="130" max="200" value="160">
+        <span id="height-preview" class="mono">160 cm</span>
+        <button id="height-save" class="btn small">Set</button>
+      </div>
+      <small class="muted">Used to estimate bust/hip for the size tip. It's a rough guide, not a measurement.</small>
+    </label>
+    <label class="field"><span>Camera</span><select id="camera-select"></select></label>
+    <label class="check"><input id="opt-arms" type="checkbox" checked> Show arms in front of the dress</label>
+    <label class="check"><input id="opt-skeleton" type="checkbox"> Show body tracking skeleton (D)</label>
+    <div class="row gap">
+      <button id="new-customer" class="btn">New customer</button>
+      <button id="fullscreen" class="btn">Full screen (F)</button>
+      <a class="btn" href="/admin">Manage collection</a>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/static/js/app.js"></script>
+</body>
+</html>

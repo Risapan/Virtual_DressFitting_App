@@ -1,0 +1,68 @@
+{
+  "id": "navy-floral-tea",
+  "name": "Navy Floral Tea Dress",
+  "price": 7900,
+  "sleeves": "short",
+  "front": "front.png",
+  "back": "back.png",
+  "thumb": "thumb.png",
+  "calib": {
+    "shoulderY": 0.05625,
+    "shoulderL": 0.275,
+    "shoulderR": 0.725,
+    "hipY": 0.36875
+  },
+  "sizes": {
+    "XS": {
+      "bust": [
+        76,
+        81
+      ],
+      "hip": [
+        82,
+        87
+      ]
+    },
+    "S": {
+      "bust": [
+        81,
+        86
+      ],
+      "hip": [
+        87,
+        92
+      ]
+    },
+    "M": {
+      "bust": [
+        86,
+        92
+      ],
+      "hip": [
+        92,
+        98
+      ]
+    },
+    "L": {
+      "bust": [
+        92,
+        99
+      ],
+      "hip": [
+        98,
+        105
+      ]
+    },
+    "XL": {
+      "bust": [
+        99,
+        107
+      ],
+      "hip": [
+        105,
+        113
+      ]
+    }
+  },
+  "sample": true
+}
